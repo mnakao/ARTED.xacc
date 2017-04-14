@@ -34,7 +34,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(ix,iy,nz) collapse(3)
+!$omp do private(ix,iy,nz) 
   do nz = -NLz/2,NLz/2-1
   do iy = 0,NLy-1
   do ix = 0,NLx-1
@@ -44,7 +44,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(ix,ny,nz) collapse(3)
+!$omp do private(ix,ny,nz) 
   do nz = -NLz/2,NLz/2-1
   do ny = -NLy/2,NLy/2-1
   do ix = 0,NLx-1
@@ -54,7 +54,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(nx,ny,nz) collapse(3)
+!$omp do private(nx,ny,nz) 
   do nz = -NLz/2,NLz/2-1
   do ny = -NLy/2,NLy/2-1
   do nx = -NLx/2,NLx/2-1
@@ -64,7 +64,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(nx,ny,nz,G2) collapse(3)
+!$omp do private(nx,ny,nz,G2) 
   do nz = -NLz/2,NLz/2-1
   do ny = -NLy/2,NLy/2-1
   do nx = -NLx/2,NLx/2-1
@@ -84,7 +84,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(nx,ny,iz) collapse(3)
+!$omp do private(nx,ny,iz) 
   do iz = 0,NLz-1
   do ny = -NLy/2,NLy/2-1
   do nx = -NLx/2,NLx/2-1
@@ -94,7 +94,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(nx,iy,iz) collapse(3)
+!$omp do private(nx,iy,iz) 
   do iz = 0,NLz-1
   do iy = 0,NLy-1
   do nx = -NLx/2,NLx/2-1
@@ -104,7 +104,7 @@ Subroutine Hartree
   end do
 !$omp end do
 
-!$omp do private(ix,iy,iz) collapse(3)
+!$omp do private(ix,iy,iz) 
   do iz = 0,NLz-1
   do iy = 0,NLy-1
   do ix = 0,NLx-1

@@ -30,7 +30,9 @@ Program main
   character(10) :: functional_t
 !$ integer :: omp_get_max_threads  
 
+#ifndef _XCALABLEMP
   call MPI_init(ierr)
+#endif
   call MPI_COMM_SIZE(MPI_COMM_WORLD,Nprocs,ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD,Myrank,ierr)
 
@@ -87,10 +89,10 @@ Program main
 
   call Hartree
 ! yabana
-  functional_t = functional
-  if(functional_t == 'TBmBJ') functional = 'PZM'
+  functional_t = xmp_functional
+  if(functional_t == 'TBmBJ') xmp_functional = 'PZM'
   call Exc_Cor('GS')
-  if(functional_t == 'TBmBJ') functional = 'TBmBJ'
+  if(functional_t == 'TBmBJ') xmp_functional = 'TBmBJ'
 ! yabana
   Vloc(1:NL)=Vh(1:NL)+Vpsl(1:NL)+Vexc(1:NL)
 !  call Total_Energy(Rion_update,'GS')
@@ -148,10 +150,10 @@ Program main
     call Density_Update(iter) 
     call Hartree
 ! yabana
-    functional_t = functional
-    if(functional_t == 'TBmBJ' .and. iter < 20) functional = 'PZM'
+    functional_t = xmp_functional
+    if(functional_t == 'TBmBJ' .and. iter < 20) xmp_functional = 'PZM'
     call Exc_Cor('GS')
-    if(functional_t == 'TBmBJ' .and. iter < 20) functional = 'TBmBJ'
+    if(functional_t == 'TBmBJ' .and. iter < 20) xmp_functional = 'TBmBJ'
 ! yabana
     Vloc(1:NL)=Vh(1:NL)+Vpsl(1:NL)+Vexc(1:NL)
     call Total_Energy_omp(Rion_update,'GS')
@@ -549,7 +551,7 @@ Subroutine Read_data
     read(*,*) SYSname
     read(*,*) directory
 !yabana
-    read(*,*) functional, cval
+    read(*,*) xmp_functional, cval
 !yabana
     read(*,*) ps_format !shinohara
     read(*,*) PSmask_option !shinohara
@@ -568,8 +570,8 @@ Subroutine Read_data
     write(*,*) SYSname
     write(*,*) directory
 !yabana
-    write(*,*) 'functional=',functional
-    if(functional == 'TBmBJ') write(*,*) 'cvalue=',cval
+    write(*,*) 'functional=',xmp_functional
+    if(xmp_functional == 'TBmBJ') write(*,*) 'cvalue=',cval
 !yabana
     write(*,*) 'ps_format =',ps_format !shinohara
     write(*,*) 'PSmask_option =',PSmask_option !shinohara
@@ -595,7 +597,7 @@ Subroutine Read_data
   call MPI_BCAST(SYSname,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(directory,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 !yabana
-  call MPI_BCAST(functional,10,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+  call MPI_BCAST(xmp_functional,10,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(cval,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
 !yabana
 
@@ -637,7 +639,7 @@ Subroutine Read_data
 !sym ---
   select case(crystal_structure)
   case("diamond")
-     if(functional == "PZ" .or. functional == "PZM" .or. functional == "TBmBJ")then
+     if(xmp_functional == "PZ" .or. xmp_functional == "PZM" .or. xmp_functional == "TBmBJ")then
         if(Sym == 8)then
            if((mod(NLx,4)+mod(NLy,4)+mod(NLz,4)) /= 0)call err_finalize('Bad grid point')
            if(NLx /= NLy)call err_finalize('Bad grid point')
@@ -652,7 +654,7 @@ Subroutine Read_data
         if(Sym /= 1)call err_finalize('Bad crystal structure')
      end if
   case("tetragonal")
-     if(functional == "PZ" .or. functional == "PZM")then
+     if(xmp_functional == "PZ" .or. xmp_functional == "PZM")then
         if((mod(NLx,4)+mod(NLy,4)+mod(NLz,4)) /= 0)call err_finalize('Bad grid point')
         if(NLx /= NLy)call err_finalize('Bad grid point')
         if(NKx /= NKy) call err_finalize('NKx /= NKy')
@@ -1031,7 +1033,7 @@ subroutine prep_Reentrance_Read
   read(500) FSset_option,MD_option
   read(500) AD_RHO !ovlp_option
 !yabana
-  read(500) functional
+  read(500) xmp_functional
   read(500) cval ! cvalue for TBmBJ. If cval<=0, calculated in the program
 !yabana
 
@@ -1299,7 +1301,7 @@ subroutine prep_Reentrance_write
   write(500) FSset_option,MD_option
   write(500) AD_RHO !ovlp_option
 !yabana
-  write(500) functional
+  write(500) xmp_functional
   write(500) cval ! cvalue for TBmBJ. If cval<=0, calculated in the program
 !yabana
 

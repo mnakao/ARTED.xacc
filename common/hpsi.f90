@@ -101,13 +101,13 @@ Subroutine hpsi(ik)
 End Subroutine hpsi
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
 subroutine hpsi_omp_KB(ik,tpsi,ttpsi,htpsi)
-  use Global_Variables, only: functional, NL
+  use Global_Variables, only: xmp_functional, NL
   implicit none
   integer,intent(in)     :: ik
   complex(8),intent(in)  :: tpsi(NL)
   complex(8),intent(out) :: ttpsi(NL),htpsi(NL)
 
-  select case(functional)
+  select case(xmp_functional)
     case('PZ', 'PZM','PBE','TBmBJ')
       call hpsi1(ik,tpsi,ttpsi,htpsi)
     case('TPSS','VS98')

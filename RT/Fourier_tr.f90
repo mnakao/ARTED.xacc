@@ -49,21 +49,21 @@ Subroutine Fourier_tr
       if (ext_field == 'LR' .and. Longi_Trans == 'Lo') then
         write(7,'(1x,f13.7,6f22.14)') hw&
              &,(real(zeps(ixyz)),ixyz=1,3)&
-             &,(imag(zeps(ixyz)),ixyz=1,3)
+             &,(aimag(zeps(ixyz)),ixyz=1,3)
       else if (ext_field == 'LR' .and. Longi_Trans == 'Tr') then
         write(7,'(1x,f13.7,12f22.14)') hw&
              &,(real(zsigma_w(ixyz)),ixyz=1,3)&
-             &,(imag(zsigma_w(ixyz)),ixyz=1,3)&
+             &,(aimag(zsigma_w(ixyz)),ixyz=1,3)&
              &,(real(zeps(ixyz)),ixyz=1,3)&
-             &,(imag(zeps(ixyz)),ixyz=1,3)
+             &,(aimag(zeps(ixyz)),ixyz=1,3)
       else
         write(7,'(1x,f13.7,18f22.14)') hw&
              &,(real(jav_w(ixyz)),ixyz=1,3)&
-             &,(imag(jav_w(ixyz)),ixyz=1,3)&
+             &,(aimag(jav_w(ixyz)),ixyz=1,3)&
              &,(real(E_ext_w(ixyz)),ixyz=1,3)&
-             &,(imag(E_ext_w(ixyz)),ixyz=1,3)&
+             &,(aimag(E_ext_w(ixyz)),ixyz=1,3)&
              &,(real(E_tot_w(ixyz)),ixyz=1,3)&
-             &,(imag(E_tot_w(ixyz)),ixyz=1,3)
+             &,(aimag(E_tot_w(ixyz)),ixyz=1,3)
       endif
     endif
   enddo

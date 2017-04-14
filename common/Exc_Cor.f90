@@ -20,12 +20,12 @@ Subroutine Exc_Cor(GS_RT)
   implicit none
   character(2) :: GS_RT
   call timelog_begin(LOG_EXC_COR)
-  if(functional == 'PZ') call Exc_Cor_PZ
-  if(functional == 'PZM') call Exc_Cor_PZM
-  if(functional == 'PBE') call Exc_Cor_PBE(GS_RT)
-  if(functional == 'TBmBJ') call Exc_Cor_TBmBJ(GS_RT)
-  if(functional == 'TPSS') call Exc_Cor_TPSS(GS_RT)
-  if(functional == 'VS98') call Exc_Cor_VS98(GS_RT)
+  if(xmp_functional == 'PZ') call Exc_Cor_PZ
+  if(xmp_functional == 'PZM') call Exc_Cor_PZM
+  if(xmp_functional == 'PBE') call Exc_Cor_PBE(GS_RT)
+  if(xmp_functional == 'TBmBJ') call Exc_Cor_TBmBJ(GS_RT)
+  if(xmp_functional == 'TPSS') call Exc_Cor_TPSS(GS_RT)
+  if(xmp_functional == 'VS98') call Exc_Cor_VS98(GS_RT)
   call timelog_end(LOG_EXC_COR)
   return
   end
@@ -33,18 +33,18 @@ Subroutine Exc_Cor(GS_RT)
 Subroutine Exc_Cor_PZ()
   use Global_Variables
   implicit none
-  interface
-    subroutine PZxc(trho,exc,dexc_drho)
-      !$acc routine seq
-      real(8),intent(out) :: trho
-      real(8),intent(in)  :: exc
-      real(8),intent(in)  :: dexc_drho
-    end subroutine PZxc
-  end interface
+!  interface
+!    subroutine PZxc(trho,exc2,dexc_drho)
+!      !$acc routine seq
+!      real(8),intent(out) :: trho
+!      real(8),intent(in)  :: exc2
+!      real(8),intent(in)  :: dexc_drho
+!    end subroutine PZxc
+!  end interface
   real(8) :: rho_s(NL)
   integer :: i
   real(8) :: trho,e_xc,de_xc_drho
-
+  
 !$acc kernels
 !  call rho_j_tau(GS_RT,rho_s,tau_s,j_s,grho_s,lrho_s)
   rho_s=rho*0.5d0
@@ -56,20 +56,47 @@ Subroutine Exc_Cor_PZ()
     Vexc(i)=e_xc+trho*de_xc_drho
   enddo
 !$acc end kernels
-  return
+  !  return
+contains
+  Subroutine PZxc(trho,exc,dexc_drho)
+    !$acc routine seq
+    implicit none
+    real(8),parameter :: Pi=3.141592653589793d0
+    real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
+    real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
+    real(8),parameter :: CU=0.002d0,DU=-0.0116d0
+    real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
+    real(8) :: exc,dexc_drho
+    real(8) :: trho,ttrho,rs,rssq,rsln
+
+    ttrho=trho+1d-10
+    rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
+    exc=-const/rs
+    dexc_drho=exc/(3*ttrho)
+    if (rs>1d0) then
+       rssq=sqrt(rs)
+       exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
+       dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3*ttrho)/(1+beta1U*rssq+beta2U*rs)**2
+    else
+       rsln=log(rs)
+       exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
+       dexc_drho=dexc_drho-rs/(3*ttrho)*(AU/rs+CU*(rsln+1)+DU)
+    endif
+    return
+    End Subroutine PZxc
 End Subroutine Exc_Cor_PZ
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
 Subroutine Exc_Cor_PZM()
   use Global_Variables
   implicit none
-  interface
-    subroutine PZMxc(trho,exc,dexc_drho)
-      !$acc routine seq
-      real(8),intent(out) :: trho
-      real(8),intent(in)  :: exc
-      real(8),intent(in)  :: dexc_drho
-    end subroutine PZMxc
-  end interface
+!  interface
+!    subroutine PZMxc(trho,exc2,dexc_drho)
+!      !$acc routine seq
+!      real(8),intent(out) :: trho
+!      real(8),intent(in)  :: exc2
+!      real(8),intent(in)  :: dexc_drho
+!    end subroutine PZMxc
+!  end interface
   real(8) :: rho_s(NL)
   integer :: i
   real(8) :: trho,e_xc,de_xc_drho
@@ -85,7 +112,34 @@ Subroutine Exc_Cor_PZM()
     Vexc(i)=e_xc+trho*de_xc_drho
   enddo
 !$acc end kernels
-  return
+  !  return
+contains
+  Subroutine PZMxc(trho,exc,dexc_drho)
+    !$acc routine seq
+    implicit none
+    real(8),parameter :: Pi=3.141592653589793d0
+    real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
+    real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
+    real(8),parameter :: CU=0.2019151940622859d-2, DU=-0.1163206637891297d-1
+    real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
+    real(8) :: exc,dexc_drho
+    real(8) :: trho,ttrho,rs,rssq,rsln
+
+    ttrho=trho+1d-10
+    rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
+    exc=-const/rs
+    dexc_drho=exc/(3d0*ttrho)
+    if (rs>1d0) then
+       rssq=sqrt(rs)
+       exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
+       dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3d0*ttrho)/(1d0+beta1U*rssq+beta2U*rs)**2
+    else
+       rsln=log(rs)
+       exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
+       dexc_drho=dexc_drho-rs/(3d0*ttrho)*(AU/rs+CU*(rsln+1d0)+DU)
+    endif
+    return
+    End Subroutine PZMxc
 End Subroutine Exc_Cor_PZM
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
 Subroutine Exc_Cor_PBE(GS_RT)
@@ -458,59 +512,59 @@ SUBROUTINE fec_xz(x,z,alp,a,b,c,d,e,f,fxz,dfxz_dx,dfxz_dz)
   return
   end
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
-Subroutine PZxc(trho,exc,dexc_drho)
-!$acc routine seq
-  implicit none
-  real(8),parameter :: Pi=3.141592653589793d0
-  real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
-  real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
-  real(8),parameter :: CU=0.002d0,DU=-0.0116d0
-  real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
-  real(8) :: exc,dexc_drho
-  real(8) :: trho,ttrho,rs,rssq,rsln
-
-  ttrho=trho+1d-10
-  rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
-  exc=-const/rs
-  dexc_drho=exc/(3*ttrho)
-  if (rs>1d0) then
-    rssq=sqrt(rs)
-    exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
-    dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3*ttrho)/(1+beta1U*rssq+beta2U*rs)**2
-  else
-    rsln=log(rs)
-    exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
-    dexc_drho=dexc_drho-rs/(3*ttrho)*(AU/rs+CU*(rsln+1)+DU)
-  endif
-  return
-End Subroutine PZxc
+!Subroutine PZxc(trho,exc,dexc_drho)
+!!$acc routine seq
+!  implicit none
+!  real(8),parameter :: Pi=3.141592653589793d0
+!  real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
+!  real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
+!  real(8),parameter :: CU=0.002d0,DU=-0.0116d0
+!  real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
+!  real(8) :: exc,dexc_drho
+!  real(8) :: trho,ttrho,rs,rssq,rsln
+!
+!  ttrho=trho+1d-10
+!  rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
+!  exc=-const/rs
+!  dexc_drho=exc/(3*ttrho)
+!  if (rs>1d0) then
+!    rssq=sqrt(rs)
+!    exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
+!    dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3*ttrho)/(1+beta1U*rssq+beta2U*rs)**2
+!  else
+!    rsln=log(rs)
+!    exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
+!    dexc_drho=dexc_drho-rs/(3*ttrho)*(AU/rs+CU*(rsln+1)+DU)
+!  endif
+!  return
+!End Subroutine PZxc
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
-Subroutine PZMxc(trho,exc,dexc_drho)
-!$acc routine seq
-  implicit none
-  real(8),parameter :: Pi=3.141592653589793d0
-  real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
-  real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
-  real(8),parameter :: CU=0.2019151940622859d-2, DU=-0.1163206637891297d-1
-  real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
-  real(8) :: exc,dexc_drho
-  real(8) :: trho,ttrho,rs,rssq,rsln
-
-  ttrho=trho+1d-10
-  rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
-  exc=-const/rs
-  dexc_drho=exc/(3d0*ttrho)
-  if (rs>1d0) then
-    rssq=sqrt(rs)
-    exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
-    dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3d0*ttrho)/(1d0+beta1U*rssq+beta2U*rs)**2
-  else
-    rsln=log(rs)
-    exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
-    dexc_drho=dexc_drho-rs/(3d0*ttrho)*(AU/rs+CU*(rsln+1d0)+DU)
-  endif
-  return
-End Subroutine PZMxc
+!Subroutine PZMxc(trho,exc,dexc_drho)
+!!$acc routine seq
+!  implicit none
+!  real(8),parameter :: Pi=3.141592653589793d0
+!  real(8),parameter :: gammaU=-0.1423d0,beta1U=1.0529d0
+!  real(8),parameter :: beta2U=0.3334d0,AU=0.0311d0,BU=-0.048d0
+!  real(8),parameter :: CU=0.2019151940622859d-2, DU=-0.1163206637891297d-1
+!  real(8),parameter :: const = 0.75d0*(3d0/(2d0*pi))**(2d0/3d0)
+!  real(8) :: exc,dexc_drho
+!  real(8) :: trho,ttrho,rs,rssq,rsln
+!
+!  ttrho=trho+1d-10
+!  rs=(3d0/(4*Pi*ttrho))**(1d0/3d0)
+!  exc=-const/rs
+!  dexc_drho=exc/(3d0*ttrho)
+!  if (rs>1d0) then
+!    rssq=sqrt(rs)
+!    exc=exc+gammaU/(1d0+beta1U*rssq+beta2U*rs)
+!    dexc_drho=dexc_drho+gammaU*(0.5d0*beta1U*rssq+beta2U*rs)/(3d0*ttrho)/(1d0+beta1U*rssq+beta2U*rs)**2
+!  else
+!    rsln=log(rs)
+!    exc=exc+AU*rsln+BU+CU*rs*rsln+DU*rs
+!    dexc_drho=dexc_drho-rs/(3d0*ttrho)*(AU/rs+CU*(rsln+1d0)+DU)
+!  endif
+!  return
+!End Subroutine PZMxc
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
   SUBROUTINE HSEFx(rho,ss,omega,FxHSE,drho_FxHSE,ds_FxHSE)
   implicit none
@@ -970,9 +1024,9 @@ Subroutine rho_j_tau(GS_RT,rho_s,tau_s,j_s,grho_s,lrho_s)
             &  +zI*kAc0(ik,3)*zu_GS(i,ib,ik)   
           tau_s_l_omp(i,thr_id)=tau_s_l_omp(i,thr_id) &
             &+(abs(zs(1))**2+abs(zs(2))**2+abs(zs(3))**2)*(occ(ib,ik)*0.5d0)*0.5d0
-          j_s_l_omp(i,1,thr_id)=j_s_l_omp(i,1,thr_id)+imag(conjg(zu_GS(i,ib,ik))*zs(1))*(occ(ib,ik)*0.5d0)
-          j_s_l_omp(i,2,thr_id)=j_s_l_omp(i,2,thr_id)+imag(conjg(zu_GS(i,ib,ik))*zs(2))*(occ(ib,ik)*0.5d0)
-          j_s_l_omp(i,3,thr_id)=j_s_l_omp(i,3,thr_id)+imag(conjg(zu_GS(i,ib,ik))*zs(3))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,1,thr_id)=j_s_l_omp(i,1,thr_id)+aimag(conjg(zu_GS(i,ib,ik))*zs(1))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,2,thr_id)=j_s_l_omp(i,2,thr_id)+aimag(conjg(zu_GS(i,ib,ik))*zs(2))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,3,thr_id)=j_s_l_omp(i,3,thr_id)+aimag(conjg(zu_GS(i,ib,ik))*zs(3))*(occ(ib,ik)*0.5d0)
         enddo
       end do
 !$omp end parallel
@@ -1010,9 +1064,9 @@ Subroutine rho_j_tau(GS_RT,rho_s,tau_s,j_s,grho_s,lrho_s)
             &  +zI*kAc0(ik,3)*zu(i,ib,ik)
           tau_s_l_omp(i,thr_id)=tau_s_l_omp(i,thr_id) &
             &+(abs(zs(1))**2+abs(zs(2))**2+abs(zs(3))**2)*(occ(ib,ik)*0.5d0)*0.5d0
-          j_s_l_omp(i,1,thr_id)=j_s_l_omp(i,1,thr_id)+imag(conjg(zu(i,ib,ik))*zs(1))*(occ(ib,ik)*0.5d0)
-          j_s_l_omp(i,2,thr_id)=j_s_l_omp(i,2,thr_id)+imag(conjg(zu(i,ib,ik))*zs(2))*(occ(ib,ik)*0.5d0)
-          j_s_l_omp(i,3,thr_id)=j_s_l_omp(i,3,thr_id)+imag(conjg(zu(i,ib,ik))*zs(3))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,1,thr_id)=j_s_l_omp(i,1,thr_id)+aimag(conjg(zu(i,ib,ik))*zs(1))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,2,thr_id)=j_s_l_omp(i,2,thr_id)+aimag(conjg(zu(i,ib,ik))*zs(2))*(occ(ib,ik)*0.5d0)
+          j_s_l_omp(i,3,thr_id)=j_s_l_omp(i,3,thr_id)+aimag(conjg(zu(i,ib,ik))*zs(3))*(occ(ib,ik)*0.5d0)
         enddo
       end do
 !$omp end parallel

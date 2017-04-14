@@ -130,7 +130,7 @@ Module Global_Variables
   character(1) :: FSset_option,MD_option
   character(2) :: AD_RHO !ovlp_option
 !yabana
-  character(10) :: functional
+  character(10) :: xmp_functional
   real(8) :: cval ! cvalue for TBmBJ. If cval<=0, calculated in the program
 !yabana
 

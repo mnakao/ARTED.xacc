@@ -42,7 +42,7 @@ Subroutine prep_ps_periodic(property)
 
 ! local potential
 !$omp parallel
-!$omp do private(ik,n,G2sq,s,r,i,vloc_av) collapse(2)
+!$omp do private(ik,n,G2sq,s,r,i,vloc_av)
   do ik=1,NE
     do n=NG_s,NG_e
       G2sq=sqrt(Gx(n)**2+Gy(n)**2+Gz(n)**2)

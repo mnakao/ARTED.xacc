@@ -107,7 +107,7 @@ contains
     implicit none
     integer :: tid_range
 
-    select case(functional)
+    select case(xmp_functional)
       case('TPSS','VS98')
         call err_finalize('functional: TPSS/VS98 versions not implemented.')
     end select

@@ -19,8 +19,8 @@ module performance_analyzer
   public  print_stencil_size, show_performance
   public  get_hamiltonian_performance
 
-  private summation_threads, get_gflops, get_hamiltonian_chunk_size
-  private get_stencil_FLOP, get_pseudo_pt_FLOP, get_update_FLOP
+!  private summation_threads, get_gflops, get_hamiltonian_chunk_size
+!  private get_stencil_FLOP, get_pseudo_pt_FLOP, get_update_FLOP
 
 contains
   subroutine print_stencil_size

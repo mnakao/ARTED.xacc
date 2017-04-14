@@ -60,9 +60,9 @@ Subroutine current
             &+nabz(2)*(zu(ifdz(2,i),ib,ik)-zu(ifdz(-2,i),ib,ik))&
             &+nabz(3)*(zu(ifdz(3,i),ib,ik)-zu(ifdz(-3,i),ib,ik))&
             &+nabz(4)*(zu(ifdz(4,i),ib,ik)-zu(ifdz(-4,i),ib,ik))
-        jxt=jxt+imag(conjg(zu(i,ib,ik))*zs(1))
-        jyt=jyt+imag(conjg(zu(i,ib,ik))*zs(2))
-        jzt=jzt+imag(conjg(zu(i,ib,ik))*zs(3))
+        jxt=jxt+aimag(conjg(zu(i,ib,ik))*zs(1))
+        jyt=jyt+aimag(conjg(zu(i,ib,ik))*zs(2))
+        jzt=jzt+aimag(conjg(zu(i,ib,ik))*zs(3))
       enddo
       case default
         call err_finalize('Nd /= 4')
@@ -105,9 +105,9 @@ Subroutine current
         uVpsix=uVpsix*Hxyz
         uVpsiy=uVpsiy*Hxyz
         uVpsiz=uVpsiz*Hxyz
-        jxt=jxt+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsix)*uVpsi)
-        jyt=jyt+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsiy)*uVpsi)
-        jzt=jzt+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsiz)*uVpsi)
+        jxt=jxt+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsix)*uVpsi)
+        jyt=jyt+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsiy)*uVpsi)
+        jzt=jzt+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsiz)*uVpsi)
       enddo
     enddo
   enddo
@@ -156,9 +156,9 @@ Subroutine current_GS
             &+nabz(2)*(zu_GS(ifdz(2,i),ib,ik)-zu_GS(ifdz(-2,i),ib,ik))&
             &+nabz(3)*(zu_GS(ifdz(3,i),ib,ik)-zu_GS(ifdz(-3,i),ib,ik))&
             &+nabz(4)*(zu_GS(ifdz(4,i),ib,ik)-zu_GS(ifdz(-4,i),ib,ik))
-        jx(i)=jx(i)+occ(ib,ik)*imag(conjg(zu_GS(i,ib,ik))*zs(1))
-        jy(i)=jy(i)+occ(ib,ik)*imag(conjg(zu_GS(i,ib,ik))*zs(2))
-        jz(i)=jz(i)+occ(ib,ik)*imag(conjg(zu_GS(i,ib,ik))*zs(3))
+        jx(i)=jx(i)+occ(ib,ik)*aimag(conjg(zu_GS(i,ib,ik))*zs(1))
+        jy(i)=jy(i)+occ(ib,ik)*aimag(conjg(zu_GS(i,ib,ik))*zs(2))
+        jz(i)=jz(i)+occ(ib,ik)*aimag(conjg(zu_GS(i,ib,ik))*zs(3))
       enddo
       case default
         call err_finalize('Nd /= 4')
@@ -197,9 +197,9 @@ Subroutine current_GS
         uVpsix=uVpsix*Hxyz
         uVpsiy=uVpsiy*Hxyz
         uVpsiz=uVpsiz*Hxyz
-        jav_l(1)=jav_l(1)+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsix)*uVpsi)
-        jav_l(2)=jav_l(2)+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsiy)*uVpsi)
-        jav_l(3)=jav_l(3)+occ(ib,ik)/aLxyz*2*imag(conjg(uVpsiz)*uVpsi)
+        jav_l(1)=jav_l(1)+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsix)*uVpsi)
+        jav_l(2)=jav_l(2)+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsiy)*uVpsi)
+        jav_l(3)=jav_l(3)+occ(ib,ik)/aLxyz*2*aimag(conjg(uVpsiz)*uVpsi)
       enddo
     enddo
   enddo
@@ -292,7 +292,7 @@ Subroutine current_init_impl(ik,ib,zutmp,jx,jy,jz)
   jt=0.d0
 !dir$ vector aligned
   do i=0,NL-1
-    jt=jt+real(zutmp(i))**2+imag(zutmp(i))**2
+    jt=jt+real(zutmp(i))**2+aimag(zutmp(i))**2
   end do
 
   jx=occ(ib,ik)*kAc(ik,1)*jt
@@ -321,7 +321,7 @@ Subroutine current_init_impl_LBLK(zutmp,jx,jy,jz, ikb_s,ikb_e)
     jt=0.d0
 !$acc loop vector(256) reduction(+:jt)
     do i=0,NL-1
-      jt=jt+real(zutmp(i,ib,ik))**2+imag(zutmp(i,ib,ik))**2
+      jt=jt+real(zutmp(i,ib,ik))**2+aimag(zutmp(i,ib,ik))**2
     end do
 
     jx(ikb)=occ(ib,ik)*kAc(ik,1)*jt
@@ -432,9 +432,9 @@ Subroutine current_pseudo_impl(ik,ib,zutmp,IaLxyz,jx,jy,jz)
     uVpsix=uVpsix*Hxyz
     uVpsiy=uVpsiy*Hxyz
     uVpsiz=uVpsiz*Hxyz
-    jxt=jxt+occ(ib,ik)*IaLxyz*2*imag(conjg(uVpsix)*uVpsi)
-    jyt=jyt+occ(ib,ik)*IaLxyz*2*imag(conjg(uVpsiy)*uVpsi)
-    jzt=jzt+occ(ib,ik)*IaLxyz*2*imag(conjg(uVpsiz)*uVpsi)
+    jxt=jxt+occ(ib,ik)*IaLxyz*2*aimag(conjg(uVpsix)*uVpsi)
+    jyt=jyt+occ(ib,ik)*IaLxyz*2*aimag(conjg(uVpsiy)*uVpsi)
+    jzt=jzt+occ(ib,ik)*IaLxyz*2*aimag(conjg(uVpsiz)*uVpsi)
   enddo
 
   jx=jx*Hxyz*IaLxyz+jxt
@@ -463,7 +463,7 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
 !$acc data pcopy(jx,jy,jz) pcopyin(zutmp) create(t4cp_uVpsix,t4cp_uVpsiy,t4cp_uVpsiz) &
 !$acc& pcopyin(ik_table,ib_table,a_tbl,Mps,Jxyz,Jxx,Jyy,Jzz,lx,ly,lz,uV,ekr_omp,iuV,occ)
 !$acc kernels
-!$acc loop collapse(2) gang
+!$acc loop collapse(2) gang private(uVpsi,uVpsix,uVpsiy,uVpsiz)
   do ikb = ikb_s, ikb_e
     do ilma=1,Nlma
       ik=ik_table(ikb)
@@ -488,9 +488,9 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
       uVpsiy=uVpsiy*Hxyz
       uVpsiz=uVpsiz*Hxyz
 
-      t4cp_uVpsix(ilma,ikb)=imag(conjg(uVpsix)*uVpsi)
-      t4cp_uVpsiy(ilma,ikb)=imag(conjg(uVpsiy)*uVpsi)
-      t4cp_uVpsiz(ilma,ikb)=imag(conjg(uVpsiz)*uVpsi)
+      t4cp_uVpsix(ilma,ikb)=aimag(conjg(uVpsix)*uVpsi)
+      t4cp_uVpsiy(ilma,ikb)=aimag(conjg(uVpsiy)*uVpsi)
+      t4cp_uVpsiz(ilma,ikb)=aimag(conjg(uVpsiz)*uVpsi)
     enddo
   enddo
 
@@ -543,7 +543,7 @@ Subroutine current_GS_omp_KB_impl(zutmp,jxs,jys,jzs)
 !$omp parallel reduction(+:jxs,jys,jzs)
 
 !Constructing nonlocal part
-!$omp do private(ik,ia,j,i,ix,iy,iz,kr) collapse(2)
+!$omp do private(ik,ia,j,i,ix,iy,iz,kr) 
   do ik=NK_s,NK_e
   do ia=1,NI
   do j=1,Mps(ia)
@@ -593,7 +593,7 @@ Subroutine current_omp_KB_impl(zutmp,jxs,jys,jzs)
 !$omp parallel reduction(+:jxs,jys,jzs)
 
 !Constructing nonlocal part
-!$omp do private(ik,ia,j,i,ix,iy,iz,kr) collapse(2)
+!$omp do private(ik,ia,j,i,ix,iy,iz,kr) 
   do ik=NK_s,NK_e
   do ia=1,NI
   do j=1,Mps(ia)

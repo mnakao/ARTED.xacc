@@ -41,7 +41,7 @@ Subroutine diag_omp
   call timelog_begin(LOG_DIAG)
 !$omp parallel private(thr_id)
 !$ thr_id = omp_get_thread_num()
-!$omp do private(ia,j,i,ix,iy,iz,kr) collapse(2)
+!$omp do private(ia,j,i,ix,iy,iz,kr)
 !Constructing nonlocal part ! sato
   do ik=NK_s,NK_e
   do ia=1,NI

@@ -26,14 +26,14 @@
 #endif
 
 subroutine hpsi_omp_KB_RT(ik,tpsi,htpsi)
-  use Global_Variables, only: functional
+  use Global_Variables, only: xmp_functional
   use opt_variables, only: PNL
   implicit none
   integer,intent(in)     :: ik
   complex(8),intent(in)  :: tpsi(0:PNL-1)
   complex(8),intent(out) :: htpsi(0:PNL-1)
 
-  select case(functional)
+  select case(xmp_functional)
     case('PZ','PZM', 'PBE','TBmBJ')
       call hpsi1(ik,tpsi,htpsi)
     case('TPSS','VS98')
@@ -115,7 +115,7 @@ end subroutine hpsi_omp_KB_RT
 
 
 #ifdef ARTED_LBLK
-subroutine hpsi_acc_KB_RT_LBLK(tpsi,htpsi, ikb_s,ikb_e)
+subroutine hpsi_acc_KB_RT_LBLK(tpsi2,htpsi2, ikb_s,ikb_e)
   use Global_Variables
   use opt_variables
 #ifdef ARTED_USE_NVTX
@@ -123,14 +123,14 @@ subroutine hpsi_acc_KB_RT_LBLK(tpsi,htpsi, ikb_s,ikb_e)
 #endif
   implicit none
   integer :: ikb_s,ikb_e
-  complex(8),intent(in)  ::  tpsi(0:PNL-1, ikb_s:ikb_e)
-  complex(8),intent(out) :: htpsi(0:PNL-1, ikb_s:ikb_e)
+  complex(8),intent(in)  ::  tpsi2(0:PNL-1, ikb_s:ikb_e)
+  complex(8),intent(out) :: htpsi2(0:PNL-1, ikb_s:ikb_e)
   integer :: ikb,ik
 
   NVTX_BEG('hpsi_acc_KB_RT_LBLK()', 3)
-  select case(functional)
+  select case(xmp_functional)
     case('PZ','PZM', 'PBE','TBmBJ')
-      call hpsi1_LBLK(tpsi(:,:),htpsi(:,:), ikb_s,ikb_e)
+      call hpsi1_LBLK(tpsi2(:,:),htpsi2(:,:), ikb_s,ikb_e)
     case('TPSS','VS98')
       call err_finalize('hpsi_acc_KB_RT_LBLK: TPSS/VS98 ver. not implemented.')
   end select
@@ -204,7 +204,7 @@ contains
 
   end subroutine
 
-  subroutine hpsi1_LBLK(tpsi,htpsi, ikb_s,ikb_e)
+  subroutine hpsi1_LBLK(tpsi2,htpsi2, ikb_s,ikb_e)
     use Global_Variables
     use opt_variables
 #ifdef ARTED_SC
@@ -212,14 +212,14 @@ contains
 #endif
     implicit none
     integer :: ikb_s,ikb_e
-    complex(8),intent(in)  ::  tpsi(0:PNL-1, ikb_s:ikb_e)
-    complex(8),intent(out) :: htpsi(0:PNL-1, ikb_s:ikb_e)
+    complex(8),intent(in)  ::  tpsi2(0:PNL-1, ikb_s:ikb_e)
+    complex(8),intent(out) :: htpsi2(0:PNL-1, ikb_s:ikb_e)
     integer :: ikb,ik
 
     real(8) :: k2
     real(8) :: k2lap0_2(ikb_s:ikb_e)
     real(8) :: nabt(12, ikb_s:ikb_e)
-!$acc data pcopy(tpsi) create(k2lap0_2,nabt)
+!$acc data pcopy(tpsi2) create(k2lap0_2,nabt)
 
     NVTX_BEG('hpsi1_LBLK(): hpsi1_RT_stencil', 4)
     TIMELOG_BEG(LOG_HPSI_STENCIL)
@@ -234,13 +234,13 @@ contains
       nabt( 9:12,ikb)=kAc(ik,3)*nabz(1:4)
     enddo
 !$acc end kernels
-    call hpsi1_RT_stencil_LBLK(k2lap0_2(:),Vloc,lapt,nabt(:,:),tpsi(:,:),htpsi(:,:), ikb_s,ikb_e)
+    call hpsi1_RT_stencil_LBLK(k2lap0_2(:),Vloc,lapt,nabt(:,:),tpsi2(:,:),htpsi2(:,:), ikb_s,ikb_e)
     TIMELOG_END(LOG_HPSI_STENCIL)
     NVTX_END()
 
     NVTX_BEG('hpsi1_LBLK(): pseudo_pt', 5)
     TIMELOG_BEG(LOG_HPSI_PSEUDO)
-    call pseudo_pt_LBLK(tpsi(:,:),htpsi(:,:), ikb_s,ikb_e)
+    call pseudo_pt_LBLK(tpsi2(:,:),htpsi2(:,:), ikb_s,ikb_e)
     TIMELOG_END(LOG_HPSI_PSEUDO)
     NVTX_END()
 

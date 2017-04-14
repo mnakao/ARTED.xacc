@@ -87,21 +87,21 @@ subroutine current_stencil(C,E,F,G,H)
     & +C(11)*E(IDZ(3)) &
     & +C(12)*E(IDZ(4)))
 
-    H = H + imag(w * v)
+    H = H + aimag(w * v)
 
     v=(C( 5)*E(IDY(1)) &
     & +C( 6)*E(IDY(2)) &
     & +C( 7)*E(IDY(3)) &
     & +C( 8)*E(IDY(4)))
 
-    G = G + imag(w * v)
+    G = G + aimag(w * v)
 
     v=(C( 1)*E(IDX(1)) &
     & +C( 2)*E(IDX(2)) &
     & +C( 3)*E(IDX(3)) &
     & +C( 4)*E(IDX(4)))
 
-    F = F + imag(w * v)
+    F = F + aimag(w * v)
   end do
   end do
   end do
@@ -146,7 +146,7 @@ subroutine current_stencil_LBLK(E, ikb_s,ikb_e)
 !$acc pcopyin(modx,mody,modz) &
 #endif
 !$acc pcopyin(E,ib_table,ik_table,nabx,naby,nabz)
-!$acc loop independent gang private(H,G,F)
+!$acc loop independent gang private(H,G,F,w,v)
   do ikb=ikb_s,ikb_e
     ik=ik_table(ikb)
     ib=ib_table(ikb)
@@ -161,7 +161,7 @@ subroutine current_stencil_LBLK(E, ikb_s,ikb_e)
       & +nabx(2)*(E(IDX(2))) &
       & +nabx(3)*(E(IDX(3))) &
       & +nabx(4)*(E(IDX(4))))
-      F = F + imag(w * v)
+      F = F + aimag(w * v)
     end do
     end do
     end do
@@ -177,7 +177,7 @@ subroutine current_stencil_LBLK(E, ikb_s,ikb_e)
       & +naby(2)*(E(IDY(2))) &
       & +naby(3)*(E(IDY(3))) &
       & +naby(4)*(E(IDY(4))))
-      G = G + imag(w * v)
+      G = G + aimag(w * v)
     end do
     end do
     end do
@@ -193,7 +193,7 @@ subroutine current_stencil_LBLK(E, ikb_s,ikb_e)
       & +nabz(2)*(E(IDZ(2))) &
       & +nabz(3)*(E(IDZ(3))) &
       & +nabz(4)*(E(IDZ(4))))
-      H = H + imag(w * v)
+      H = H + aimag(w * v)
     end do
     end do
     end do

@@ -72,7 +72,7 @@ Subroutine dt_evolve_omp_KB(iter)
   NVTX_END()
 
 ! yabana
-  select case(functional)
+  select case(xmp_functional)
   case('VS98','TPSS','TBmBJ')
 !$acc update self(zu, ekr_omp, vloc)
 
@@ -84,7 +84,7 @@ Subroutine dt_evolve_omp_KB(iter)
     
   Vloc_t=Vloc
 
-  if(functional == 'VS98' .or. functional == 'TPSS')then
+  if(xmp_functional == 'VS98' .or. xmp_functional == 'TPSS')then
     tmass_t=tmass
     tjr_t=tjr
     tjr2_t=tjr2
@@ -103,7 +103,7 @@ Subroutine dt_evolve_omp_KB(iter)
 
   Vloc=0.5d0*(Vloc+Vloc_t)
 
-  if(functional == 'VS98' .or. functional == 'TPSS')then
+  if(xmp_functional == 'VS98' .or. xmp_functional == 'TPSS')then
     tmass=0.5d0*(tmass+tmass_t)
     tjr=0.5d0*(tjr+tjr_t)
     tjr2=0.5d0*(tjr2+tjr2_t)
@@ -221,7 +221,7 @@ Subroutine dt_evolve_omp_KB_MS
 #endif
 
 ! yabana
-  select case(functional)
+  select case(xmp_functional)
   case('VS98','TPSS','TBmBJ')
 !$acc update self(zu, ekr_omp, vloc)
 
@@ -234,7 +234,7 @@ Subroutine dt_evolve_omp_KB_MS
 
   Vloc_t=Vloc
 
-  if(functional == 'VS98' .or. functional == 'TPSS')then
+  if(xmp_functional == 'VS98' .or. xmp_functional == 'TPSS')then
     tmass_t=tmass
     tjr_t=tjr
     tjr2_t=tjr2
@@ -253,7 +253,7 @@ Subroutine dt_evolve_omp_KB_MS
 
   Vloc=0.5d0*(Vloc+Vloc_t)
 
-  if(functional == 'VS98' .or. functional == 'TPSS')then
+  if(xmp_functional == 'VS98' .or. xmp_functional == 'TPSS')then
     tmass=0.5d0*(tmass+tmass_t)
     tjr=0.5d0*(tjr+tjr_t)
     tjr2=0.5d0*(tjr2+tjr2_t)

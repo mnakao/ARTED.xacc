@@ -230,7 +230,7 @@ subroutine hpsi1_RT_stencil_LBLK(A,B,C,D,E,F, ikb_s,ikb_e)
 !$acc& pcopyin(modx,mody,modz) &
 #endif
 !$acc& pcopyin(A,B,C,D,E)
-!$acc loop gang vector(1)
+!$acc loop gang vector(1) private(v,w)
   do ikb = ikb_s, ikb_e
 !$acc loop collapse(2) independent gang vector(128)
     do iy=0,NLy-1
