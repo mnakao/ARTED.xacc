@@ -311,15 +311,15 @@ Subroutine current_init_impl_LBLK(zutmp,jx,jy,jz, ikb_s,ikb_e)
   integer :: i
   real(8) :: jt
   integer :: ikb, ik,ib
-!$acc data pcopy(jx,jy,jz) pcopyin(zutmp,occ,kAc, ik_table,ib_table)
-!$acc kernels
-!$acc loop gang
+!$acc data pcopy(jx,jy,jz) pcopyin(zutmp,occ,kAc,ik_table,ib_table)
+!$acc parallel vector_length(256) 
+!$acc loop gang private(ikb)
   do ikb = ikb_s, ikb_e
     ik=ik_table(ikb)
     ib=ib_table(ikb)
 
     jt=0.d0
-!$acc loop vector(256) reduction(+:jt)
+!$acc loop reduction(+:jt) private(i)
     do i=0,NL-1
       jt=jt+real(zutmp(i,ib,ik))**2+aimag(zutmp(i,ib,ik))**2
     end do
@@ -328,7 +328,7 @@ Subroutine current_init_impl_LBLK(zutmp,jx,jy,jz, ikb_s,ikb_e)
     jy(ikb)=occ(ib,ik)*kAc(ik,2)*jt
     jz(ikb)=occ(ib,ik)*kAc(ik,3)*jt
   enddo
-!$acc end kernels
+!$acc end parallel
 !$acc end data
 end Subroutine
 #endif ! ARTED_LBLK
@@ -378,7 +378,8 @@ Subroutine current_RT_stencil_impl_LBLK(jx,jy,jz, ikb_s,ikb_e)
 
   integer    :: ikb, ik,ib
 !$acc data pcopy(jx,jy,jz) pcopyin(zcx,zcy,zcz,occ, ik_table,ib_table)
-!$acc kernels
+  !$acc parallel
+  !$acc loop private(ikb)
   do ikb = ikb_s, ikb_e
     ik=ik_table(ikb)
     ib=ib_table(ikb)
@@ -387,7 +388,7 @@ Subroutine current_RT_stencil_impl_LBLK(jx,jy,jz, ikb_s,ikb_e)
     jy(ikb)=jy(ikb)+zcy(ib,ik)*occ(ib,ik)
     jz(ikb)=jz(ikb)+zcz(ib,ik)*occ(ib,ik)
   enddo
-!$acc end kernels
+!$acc end parallel
 !$acc end data
 end Subroutine
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
@@ -462,15 +463,15 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
 
 !$acc data pcopy(jx,jy,jz) pcopyin(zutmp) create(t4cp_uVpsix,t4cp_uVpsiy,t4cp_uVpsiz) &
 !$acc& pcopyin(ik_table,ib_table,a_tbl,Mps,Jxyz,Jxx,Jyy,Jzz,lx,ly,lz,uV,ekr_omp,iuV,occ)
-!$acc kernels
-!$acc loop collapse(2) gang private(uVpsi,uVpsix,uVpsiy,uVpsiz)
+!$acc parallel vector_length (256)
+!$acc loop collapse(2) independent gang private(uVpsi,uVpsix,uVpsiy,uVpsiz) private(ikb,ilma)
   do ikb = ikb_s, ikb_e
     do ilma=1,Nlma
       ik=ik_table(ikb)
       ib=ib_table(ikb)
       ia=a_tbl(ilma)
       uVpsi=0.d0; uVpsix=0.d0; uVpsiy=0.d0; uVpsiz=0.d0
-!$acc loop gang vector(256) reduction(+:uVpsi,uVpsix,uVpsiy,uVpsiz)
+!$acc loop independent gang reduction(+:uVpsi,uVpsix,uVpsiy,uVpsiz) private(j)
       do j=1,Mps(ia)
         i=Jxyz(j,ia)
 
@@ -494,7 +495,7 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
     enddo
   enddo
 
-!$acc loop gang
+!$acc loop gang private(ikb)
   do ikb = ikb_s, ikb_e
     ik=ik_table(ikb)
     ib=ib_table(ikb)
@@ -502,7 +503,7 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
     jxt=0d0
     jyt=0d0
     jzt=0d0
-!$acc loop vector(256) reduction(+:jxt,jyt,jzt)
+!$acc loop reduction(+:jxt,jyt,jzt) private(ilma)
     do ilma=1,Nlma
       jxt=jxt + t4cp_uVpsix(ilma,ikb)
       jyt=jyt + t4cp_uVpsiy(ilma,ikb)
@@ -516,7 +517,7 @@ Subroutine current_pseudo_impl_LBLK(zutmp,IaLxyz,jx,jy,jz, ikb_s,ikb_e)
     jy(ikb)=jy(ikb)*Hxyz*IaLxyz + jyt
     jz(ikb)=jz(ikb)*Hxyz*IaLxyz + jzt
   enddo
-!$acc end kernels
+!$acc end parallel
 !$acc end data
 end Subroutine
 #endif ! ARTED_LBLK
@@ -649,11 +650,11 @@ subroutine current_acc_KB_impl(zutmp,jxs,jys,jzs)
 !$acc& pcopyin(jxyz,jxx,jyy,jzz,kAc,lx,ly,lz,Mps) 
 
 !Constructing nonlocal part
-!$acc kernels
-!$acc loop collapse(2) independent gang
+!$acc parallel vector_length(128)
+!$acc loop collapse(2) independent gang private(ik)
   do ik=NK_s,NK_e
   do ia=1,NI
-!$acc loop independent vector(128)
+!$acc loop independent private(j)
   do j=1,Mps(ia)
     i=Jxyz(j,ia); ix=Jxx(j,ia); iy=Jyy(j,ia); iz=Jzz(j,ia)
     kr=kAc(ik,1)*(Lx(i)*Hx-ix*aLx)+kAc(ik,2)*(Ly(i)*Hy-iy*aLy)+kAc(ik,3)*(Lz(i)*Hz-iz*aLz)
@@ -661,7 +662,7 @@ subroutine current_acc_KB_impl(zutmp,jxs,jys,jzs)
   end do
   end do
   end do
-!$acc end kernels
+!$acc end parallel
 
   do ikb0 = 1, NKB, blk_nkb_current
     num_ikb1 = min(blk_nkb_current, NKB-ikb0+1)
