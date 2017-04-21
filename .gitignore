@@ -23,3 +23,9 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 CTestTestfile.cmake
+
+# for xacc
+*.xmod
+*.o
+a.out
+__omni_tmp__*
