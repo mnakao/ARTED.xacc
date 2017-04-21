@@ -22,7 +22,7 @@ Subroutine Ion_Force(Rion_update,GS_RT)
   integer :: ia,ib,ilma,ik,ix,iy,iz,n,j,i
   real(8) :: rab(3),rab2,Gvec(3),G2,Gd,ftmp_l(3,NI),kr
   complex(8) :: uVpsi,duVpsi(3),zutmp(1:NL)
-
+  real(8) derfc
 !ion
 !  if (MD_option == 'no' .and. iter /= 1) then
 !  else
@@ -40,7 +40,7 @@ Subroutine Ion_Force(Rion_update,GS_RT)
           rab(3)=Rion(3,ia)-iz*aLz-Rion(3,ib)
           rab2=sum(rab(:)**2)
           ftmp_l(:,ia)=ftmp_l(:,ia)&
-               &-Zps(Kion(ia))*Zps(Kion(ib))*rab(:)/sqrt(rab2)*(-erfc(sqrt(aEwald*rab2))/rab2&
+               &-Zps(Kion(ia))*Zps(Kion(ib))*rab(:)/sqrt(rab2)*(-derfc(sqrt(aEwald*rab2))/rab2&
                &-2*sqrt(aEwald/(rab2*Pi))*exp(-aEwald*rab2))
         enddo
       enddo
@@ -129,7 +129,8 @@ contains
     real(8)      :: rab(3),rab2,Gvec(3),G2,Gd,ftmp_l(3,NI),kr
     complex(8)   :: uVpsi,duVpsi(3)
     real(8)      :: ftmp_l_kl(3,NI,NK_s:NK_e)
-
+    real(8) derfc
+    
     call timelog_begin(LOG_ION_FORCE)
 
     !ion
@@ -149,7 +150,7 @@ contains
         rab(3)=Rion(3,ia)-iz*aLz-Rion(3,ib)
         rab2=sum(rab(:)**2)
         ftmp_l(:,ia)=ftmp_l(:,ia)&
-             &-Zps(Kion(ia))*Zps(Kion(ib))*rab(:)/sqrt(rab2)*(-erfc(sqrt(aEwald*rab2))/rab2&
+             &-Zps(Kion(ia))*Zps(Kion(ib))*rab(:)/sqrt(rab2)*(-derfc(sqrt(aEwald*rab2))/rab2&
              &-2*sqrt(aEwald/(rab2*Pi))*exp(-aEwald*rab2))
       end do
       end do
