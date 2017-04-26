@@ -37,14 +37,16 @@ done
 # NG jikkou error -> OK
 cat ./RT/current.f90 >> xacc.f90
 
-# NG nan -> 
+# NG nan -> OK
 cat ./common/ion_force.f90 >> xacc.f90
 
-# OK daga ataiga sukosi zureru
-cat ./common/Exc_Cor.f90 >> mpi.f90
+# OK daga ataiga sukosi zureru -> preprocessor in omni compiler ga genin. mondai nasi
+cat ./common/Exc_Cor.f90 >> xacc.f90
+
+# NG Nan -> OK
+cat ./common/total_energy.f90 >> xacc.f90
 
 # NG Nan
-cat ./common/total_energy.f90 >> mpi.f90
 cat ./stencil/F90/hpsi.f90 >> mpi.f90
 
 # OK daga sokudo osokunaru hutatsu
@@ -55,9 +57,9 @@ cat ./stencil/F90/current.f90 >> mpi.f90
 xmpcc -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -c modules/env_variables_internal.c
 xmpcc -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -c modules/papi_wrap.c
 
-xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee xacc.f90 -c
+xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -c xacc.f90
 
-mpif90 -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -mp -acc -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee mpi.f90 -c -module /home/mnakao/work/xmp-trunk/include/
+mpif90 -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -mp -acc -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -module /home/mnakao/work/xmp-trunk/include/ -c mpi.f90
 
 xmpf90 -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee mpi.o xacc.o env_variables_internal.o papi_wrap.o -llapack -lblas ./main/sc.f90
 

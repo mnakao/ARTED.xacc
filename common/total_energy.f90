@@ -24,7 +24,7 @@ subroutine Total_Energy(Rion_update,GS_RT)
   complex(8) :: uVpsi,zutmp(1:NL) ! sato
   real(8) :: Ekin_l,Enl_l,Eh_l,Eion_l
   real(8) :: Eion_tmp1,Eion_tmp2,Eloc_l1,Eloc_l2,Eloc_tmp1,Eloc_tmp2
-
+  real(8) :: derfc
   Eall=0.d0
 
   Ekin_l=0.d0
@@ -131,7 +131,7 @@ subroutine Total_Energy(Rion_update,GS_RT)
             rab(2)=Rion(2,ia)-iy*aLy-Rion(2,ib)
             rab(3)=Rion(3,ia)-iz*aLz-Rion(3,ib)
             rab2=sum(rab(:)**2)
-            Eion_tmp1=Eion_tmp1 + 0.5d0*Zps(Kion(ia))*Zps(Kion(ib))*erfc(sqrt(aEwald*rab2))/sqrt(rab2)
+            Eion_tmp1=Eion_tmp1 + 0.5d0*Zps(Kion(ia))*Zps(Kion(ib))*derfc(sqrt(aEwald*rab2))/sqrt(rab2)
         enddo
       enddo
       enddo
@@ -254,6 +254,7 @@ contains
     real(8)      :: nabt(12)
     real(8)      :: lap0_2
     integer      :: thr_id,omp_get_thread_num
+    real(8)      :: derfc
 
 #if defined(__KNC__) || defined(__AVX512F__)
 # define MEM_ALIGNED 64
@@ -285,7 +286,7 @@ contains
         rab(2)=Rion(2,ia)-iy*aLy-Rion(2,ib)
         rab(3)=Rion(3,ia)-iz*aLz-Rion(3,ib)
         rab2=sum(rab(:)**2)
-        Eion_tmp1=Eion_tmp1 + 0.5d0*Zps(Kion(ia))*Zps(Kion(ib))*erfc(sqrt(aEwald*rab2))/sqrt(rab2)
+        Eion_tmp1=Eion_tmp1 + 0.5d0*Zps(Kion(ia))*Zps(Kion(ib))*derfc(sqrt(aEwald*rab2))/sqrt(rab2)
       end do
       end do
       end do
