@@ -148,7 +148,7 @@ contains
     real(8),parameter           :: FLOP = 158
 
     real(8) :: get_stencil_FLOP
-    integer :: nsize
+    integer(8) :: nsize
 
     if(present(chunk_size)) then
       nsize = chunk_size
@@ -168,7 +168,7 @@ contains
 
     real(8) :: get_pseudo_pt_FLOP
     real(8) :: FLOP
-    integer :: nsize
+    integer(8) :: nsize
 
     FLOP = FLOP_scalar + (FLOP_reduction + FLOP_scatter) * sum(Mps(a_tbl(:)))
 
@@ -187,7 +187,7 @@ contains
     real(8),parameter           :: FLOP = 6 + 2
 
     real(8) :: get_update_FLOP
-    integer :: nsize
+    integer(8) :: nsize
 
     if(present(chunk_size)) then
       nsize = chunk_size
