@@ -148,7 +148,9 @@ Subroutine Hartree_6
       Vh_l(i)=Vh_l(i)+4*Pi/G2*real(rhoe_G(n)*exp(zI*Gr))
     enddo
   enddo
-  call MPI_ALLREDUCE(Vh_l,Vh,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(Vh_l,Vh,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !xmp reduction(+:Vh_l)
+  Vh(:) = Vh_l(:)
 
   return
 End Subroutine Hartree_6

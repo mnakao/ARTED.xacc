@@ -105,7 +105,9 @@ Subroutine prep_ps_periodic(property)
   enddo
 !$omp end parallel
 
-  call MPI_ALLREDUCE(Vpsl_l,Vpsl,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(Vpsl_l,Vpsl,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:Vpsl_l)
+  Vpsl(:) = Vpsl_l(:)
 
 ! nonlocal potential
   if (Myrank == 0 .and. property=='initial') then

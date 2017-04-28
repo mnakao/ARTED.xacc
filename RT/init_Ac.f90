@@ -101,8 +101,9 @@ Subroutine init_Ac
         end do
         close(899)
       end if
-      call MPI_BCAST(Ac_ext,(Nt+3)*3,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-
+!      call MPI_BCAST(Ac_ext,(Nt+3)*3,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+      !$xmp bcast(Ac_ext)
+      
     case('Asin2_cw')
 ! pulse shape : A(t)=f0/omega*sin(Pi t/T)**2 *cos (omega t+phi_CEP*2d0*pi) 
 ! pump laser

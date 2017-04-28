@@ -120,7 +120,9 @@ Subroutine current
   jav_l(2)=jy
   jav_l(3)=jz
 
-  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:jav_l)
+  jav(:) = jav_l(:)
 
   return
 end Subroutine current
@@ -203,8 +205,10 @@ Subroutine current_GS
       enddo
     enddo
   enddo
-  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-
+!  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:jav_l)
+  jav(:) = jav_l(:)
+  
   return
 End Subroutine Current_GS
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
@@ -706,6 +710,8 @@ Subroutine current_result_impl(jx,jy,jz)
   jav_l(2)=jy
   jav_l(3)=jz
 
-  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(jav_l,jav,3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:jav_l)
+  jav(:) = jav_l(:)
   call timelog_end(LOG_ALLREDUCE)
 end Subroutine

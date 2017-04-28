@@ -376,9 +376,8 @@ contains
     use global_variables
     implicit none
     integer             :: is_symmetric_mode
-    integer             :: arch, ret, i
+    integer             :: arch[*], ret, i
     integer,allocatable :: results(:)
-
     allocate(results(Nprocs))
 
 #ifdef __MIC__
@@ -387,8 +386,13 @@ contains
     arch = 2
 #endif
 
-    call MPI_Allgather(arch,1,MPI_INT,results,1,MPI_INT,MPI_COMM_WORLD,ierr)
-
+    !    call MPI_Allgather(arch,1,MPI_INT,results,1,MPI_INT,MPI_COMM_WORLD,ierr)
+    do i=1,Nprocs
+       if(Myrank+1 /= i) then
+          results(Myrank+1) = arch[i]
+       end if
+    end do
+    
     do i=2,Nprocs
       if(results(1) /= results(i)) then
         ret = 1

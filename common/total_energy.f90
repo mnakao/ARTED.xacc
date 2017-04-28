@@ -202,20 +202,31 @@ subroutine Total_Energy(Rion_update,GS_RT)
   enddo
 
 !summarize
-  CALL MPI_ALLREDUCE(Ekin_l,Ekin,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  CALL MPI_ALLREDUCE(Ekin_l,Ekin,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:Ekin_l)
+  Ekin = Ekin_l
 
 !  if (MD_option == 'no' .and. iter /= 1) then
 !  else
   if (Rion_update == 'on') then
-    call MPI_ALLREDUCE(Eion_l,Eion_tmp2,1,MPI_REAL8,MPI_SUM, NEW_COMM_WORLD,ierr)
-    Eion=Eion_tmp1+Eion_tmp2
+     !    call MPI_ALLREDUCE(Eion_l,Eion_tmp2,1,MPI_REAL8,MPI_SUM, NEW_COMM_WORLD,ierr)
+     !$xmp reduction(+:Eion_l)
+     Eion_tmp2 = Eion_l
+     Eion=Eion_tmp1+Eion_tmp2
   end if
-  call MPI_ALLREDUCE(Eh_l,Eh,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-  call MPI_ALLREDUCE(Eloc_l1,Eloc_tmp1,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-  call MPI_ALLREDUCE(Eloc_l2,Eloc_tmp2,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(Eh_l,Eh,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(Eloc_l1,Eloc_tmp1,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(Eloc_l2,Eloc_tmp2,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:Eh_l)
+  !$xmp reduction(+:Eloc_l1)
+  !$xmp reduction(+:Eloc_l2)
+  Eh = Eh_l
+  Eloc_tmp1 = Eloc_l1
+  Eloc_tmp2 = Eloc_l2
   Eloc=Eloc_tmp1+Eloc_tmp2
-  call MPI_ALLREDUCE(Enl_l,Enl,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-
+!  call MPI_ALLREDUCE(Enl_l,Enl,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  Enl = Enl_l
+  
 !Exchange correlation
   Exc=sum(rho*Eexc)*Hxyz
   Eall=Ekin+Eloc+Enl+Exc+Eh+Eion
@@ -378,7 +389,9 @@ contains
     !summarize
     if (Rion_update == 'on') then
       call timelog_begin(LOG_ALLREDUCE)
-      call MPI_ALLREDUCE(Eion_l,Eion_tmp2,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+      !      call MPI_ALLREDUCE(Eion_l,Eion_tmp2,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+      !$xmp reduction(+:Eion_l)
+      Eion_tmp2 = Eion_l
       Eion=Eion_tmp1+Eion_tmp2
       call timelog_end(LOG_ALLREDUCE)
     end if
@@ -389,7 +402,9 @@ contains
     sum_tmp(3) = Enl_l
     sum_tmp(4) = Eloc_l1
     sum_tmp(5) = Eloc_l2
-    call MPI_ALLREDUCE(sum_tmp,sum_result,5,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !    call MPI_ALLREDUCE(sum_tmp,sum_result,5,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !$xmp reduction(+:sum_tmp)
+    sum_result(:) = sum_tmp(:)
     Ekin = sum_result(1)
     Eh   = sum_result(2)
     Enl  = sum_result(3)

@@ -48,7 +48,9 @@ Subroutine k_shift_wf(atomic_position_update_switch,iter_GS_max)
       enddo
     enddo
   enddo
-  call MPI_ALLREDUCE(ovlp_occ_l,ovlp_occ,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(ovlp_occ_l,ovlp_occ,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:ovlp_occ_l)
+  ovlp_occ(:,:) = ovlp_occ_l(:,:)
 
   if(AD_RHO == 'GS')then
     Vloc(:)=Vloc_t(:)
@@ -82,7 +84,9 @@ Subroutine k_shift_wf_last(atomic_position_update_switch,iter_GS_max)
 
   esp=0d0
   call diag_omp
-  call MPI_ALLREDUCE(esp,esp_all,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(esp,esp_all,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:esp)
+  esp_all(:,:) = esp(:,:)
 
   ovlp_occ_l=0.d0
 !$omp parallel do private(ik,ib1,ib2)
@@ -93,8 +97,9 @@ Subroutine k_shift_wf_last(atomic_position_update_switch,iter_GS_max)
       enddo
     enddo
   enddo
-  call MPI_ALLREDUCE(ovlp_occ_l,ovlp_occ,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
-
+  !  call MPI_ALLREDUCE(ovlp_occ_l,ovlp_occ,NK*NB,MPI_REAL8, MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:ovlp_occ_l)
+  ovlp_occ(:,:) = ovlp_occ_l(:,:)
   
   file_nex=trim(directory)//trim(SYSname)//'_last_band_map.out'
   if (Myrank == 0)then

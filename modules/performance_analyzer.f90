@@ -55,9 +55,13 @@ contains
     call summation_threads(lgflops)
 
 #ifdef ARTED_MS
-    call MPI_ALLREDUCE(lgflops,sgflops,4,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !    call MPI_ALLREDUCE(lgflops,sgflops,4,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !$xmp reduction(+:lgflops)
+    sgflops(:) = lgflops(:)
 #endif
-    call MPI_ALLREDUCE(lgflops,tgflops,4,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+    !    call MPI_ALLREDUCE(lgflops,tgflops,4,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
+    !$xmp reduction(+:lgflops)
+    tgflops(:) = lgflops(:)
 
     if(Myrank == 0) then
       print *, '###'

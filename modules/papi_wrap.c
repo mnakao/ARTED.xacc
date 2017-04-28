@@ -78,7 +78,10 @@ void papi_end_() {
   vin[0] = v0;
   vin[1] = v1;
 
-  MPI_Reduce(vin, values, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  //  MPI_Reduce(vin, values, 2, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+#pragma xmp reduction(+:vin)
+  values[0] = vin[0];
+  values[1] = vin[1];
 
   PAPI_shutdown();
 

@@ -43,7 +43,9 @@ Subroutine sp_energy
     enddo
   enddo
 
-  CALL MPI_ALLREDUCE(esp_l,esp,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  CALL MPI_ALLREDUCE(esp_l,esp,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:esp_l)
+  esp(:,:) = esp_l(:,:)
 
   return
 End Subroutine sp_energy
@@ -85,7 +87,9 @@ Subroutine sp_energy_omp
 !$omp end parallel
 
   call timelog_begin(LOG_ALLREDUCE)
-  CALL MPI_ALLREDUCE(esp_l,esp,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  CALL MPI_ALLREDUCE(esp_l,esp,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:esp_l)
+  esp(:,:) = esp_l(:,:)
   call timelog_end(LOG_ALLREDUCE)
 
   call timelog_end(LOG_SP_ENERGY)

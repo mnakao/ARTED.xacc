@@ -1094,8 +1094,12 @@ Subroutine rho_j_tau(GS_RT,rho_s,tau_s,j_s,grho_s,lrho_s)
     end do
   end do
 
-  call MPI_ALLREDUCE(tau_s_l,tau_s,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-  call MPI_ALLREDUCE(j_s_l,j_s,NL*3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(tau_s_l,tau_s,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+!  call MPI_ALLREDUCE(j_s_l,j_s,NL*3,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:tau_s_l)
+  !$xmp reduction(+:j_s_l)
+  tau_s(:) = tau_s_l(:)
+  j_s(:,:) = j_s_l(:,:)
 
   select case(Nd)
   case(4)

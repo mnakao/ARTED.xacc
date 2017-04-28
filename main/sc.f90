@@ -30,12 +30,16 @@ Program main
   character(10) :: functional_t
 !$ integer :: omp_get_max_threads  
 
-#ifndef _XCALABLEMP
+#ifdef _XCALABLEMP
+!$xmp nodes p(*)
+  Nprocs = xmp_num_nodes()
+  Myrank = xmp_node_num() - 1
+#else
   call MPI_init(ierr)
-#endif
   call MPI_COMM_SIZE(MPI_COMM_WORLD,Nprocs,ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD,Myrank,ierr)
-
+#endif
+  
   call timelog_initialize
   call load_environments
 
@@ -55,12 +59,19 @@ Program main
 
   if(myrank == 0)write(*,*)'NUMBER_THREADS = ',NUMBER_THREADS
 
+#ifdef _XCALABLEMP
+  etime1=xmp_wtime()
+  Time_start=xmp_wtime()
+  !$xmp bcast(Time_start)
+#else
   etime1=MPI_WTIME()
   Time_start=MPI_WTIME() !reentrance
   call MPI_BCAST(Time_start,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+#endif
   Rion_update='on'
 
   call Read_data
+
   if (entrance_option == 'reentrance' ) go to 2
 
   allocate(rho_in(1:NL,1:Nscf+1),rho_out(1:NL,1:Nscf+1))
@@ -175,14 +186,22 @@ Program main
       write(*,*) 'var_ave,var_max=',esp_var_ave(iter),esp_var_max(iter)
       write(*,*) 'dns. difference =',dns_diff(iter)
       if (iter/20*20 == iter) then
+#ifdef _XCALABLEMP
+         etime2 = xmp_wtime()
+#else
          etime2=MPI_WTIME()
+#endif
          write(*,*) '====='
          write(*,*) 'elapse time=',etime2-etime1,'sec=',(etime2-etime1)/60,'min'
       end if
       write(*,*) '-----------------------------------------------'
     end if
-  end do
-  etime2 = MPI_WTIME()
+ end do
+#ifdef _XCALABLEMP
+   etime2 = xmp_wtime()
+#else
+ etime2 = MPI_WTIME()
+#endif
 
   if(Myrank == 0) then
     call timelog_set(LOG_DYNAMICS, etime2 - etime1)
@@ -221,7 +240,11 @@ Program main
   Eall0=Eall
   if(Myrank == 0) write(*,*) 'Eall =',Eall
 
+#ifdef _XCALABLEMP
+  etime2=xmp_wtime()
+#else
   etime2=MPI_WTIME()
+#endif
   if (Myrank == 0) then
     write(*,*) '-----------------------------------------------'
     write(*,*) 'static time=',etime2-etime1,'sec=', (etime2-etime1)/60,'min'
@@ -305,7 +328,11 @@ Program main
 #ifdef ARTED_USE_PAPI
   call papi_begin
 #endif
+#ifdef _XCALABLEMP
+  etime1=xmp_wtime()
+#else
   etime1=MPI_WTIME()
+#endif
 !$acc enter data copyin(zu)
   do iter=entrance_iter+1,Nt
     do ixyz=1,3
@@ -426,7 +453,11 @@ Program main
 
 !Timer
     if (iter/1000*1000 == iter.and.Myrank == 0) then
-      etime2=MPI_WTIME()
+#ifdef _XCALABLEMP
+       etime2=xmp_wtime()
+#else
+       etime2=MPI_WTIME()
+#endif
       call timelog_set(LOG_DYNAMICS, etime2 - etime1)
       call timelog_show_hour('dynamics time      :', LOG_DYNAMICS)
       call timelog_show_min ('dt_evolve time     :', LOG_DT_EVOLVE)
@@ -435,13 +466,22 @@ Program main
     end if
 !Timer for shutdown
     if (iter/10*10 == iter) then
-      Time_now=MPI_WTIME()
-      call MPI_BCAST(Time_now,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+#ifdef _XCALABLEMP
+       Time_now=xmp_wtime()
+       !$xmp bcast(Time_now)
+#else
+       Time_now=MPI_WTIME()
+       call MPI_BCAST(Time_now,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+#endif
       if (Myrank == 0 .and. iter/100*100 == iter) then
         write(*,*) 'Total time =',(Time_now-Time_start)
       end if
-      if ((Time_now - Time_start)>Time_shutdown) then 
-        call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+      if ((Time_now - Time_start)>Time_shutdown) then
+#ifdef _XCALABLEMP
+         !$xmp barrier
+#else
+         call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
         write(*,*) Myrank,'iter =',iter
         iter_now=iter
 !$acc update self(zu)
@@ -452,8 +492,12 @@ Program main
 
     call timelog_end(LOG_OTHER)
   enddo !end of RT iteraction========================
-!$acc exit data copyout(zu)
+  !$acc exit data copyout(zu)
+#ifdef _XCALABLEMP
+  etime2=xmp_wtime()
+#else
   etime2=MPI_WTIME()
+#endif
 #ifdef ARTED_USE_PAPI
   call papi_end
 #endif
@@ -504,15 +548,24 @@ Program main
   call k_shift_wf_last(Rion_update,10)
 
   call Fourier_tr
-
+#ifdef _XCALABLEMP
+  !$xmp barrier
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
 
   if (Myrank == 0) write(*,*) 'This is the end of all calculation'
+#ifdef _XCALABLEMP
+  Time_now=xmp_wtime()
+#else
   Time_now=MPI_WTIME()
+#endif
   if (Myrank == 0 ) write(*,*) 'Total time =',(Time_now-Time_start)
 
 1 if(Myrank == 0) write(*,*)  'This calculation is shutdown successfully!'
+#ifndef _XCALABLEMP
   call MPI_FINALIZE(ierr)
+#endif
 
 End Program Main
 !--------10--------20--------30--------40--------50--------60--------70--------80--------90--------100-------110-------120--------130
@@ -526,26 +579,29 @@ Subroutine Read_data
   if (Myrank == 0) then
     write(*,*) 'Nprocs=',Nprocs
     write(*,*) 'Myrank=0:  ',Myrank
-
     read(*,*) entrance_option
     write(*,*) 'entrance_option=',entrance_option
     read(*,*) Time_shutdown
     write(*,*) 'Time_shutdown=',Time_shutdown,'sec'
-
   end if
 
+#ifdef _XCALABLEMP
+  !$xmp bcast(entrance_option)
+  !$xmp bcast(Time_shutdown)
+#else
   call MPI_BCAST(entrance_option,10,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Time_shutdown,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+#endif
 
+  !$xmp barrier
   if(entrance_option == 'reentrance') then
-    call prep_Reentrance_Read
-    return
+     call prep_Reentrance_Read
+     return
   else if(entrance_option == 'new') then
-  else 
-    call err_finalize('entrance_option /= new or reentrance')
+  else
+     call err_finalize('entrance_option /= new or reentrance')
   end if
-
-
+  
   if(Myrank == 0)then
     read(*,*) entrance_iter
     read(*,*) SYSname
@@ -594,6 +650,49 @@ Subroutine Read_data
     write(*,*) 'KbTev=',KbTev ! sato
   end if
 
+#ifdef _XCALABLEMP
+  !$xmp bcast(SYSname)
+  !$xmp bcast(directory)
+  
+  !$xmp bcast(xmp_functional)
+  !$xmp bcast(cval)
+  
+  !$xmp bcast(ps_format)
+  !$xmp bcast(PSmask_option)
+  !$xmp bcast(alpha_mask)
+  !$xmp bcast(gamma_mask)
+  !$xmp bcast(eta_mask)
+  
+  !$xmp bcast(file_GS)
+  !$xmp bcast(file_RT)
+  !$xmp bcast(file_epst)
+  !$xmp bcast(file_epse)
+  !$xmp bcast(file_force_dR)
+  !$xmp bcast(file_j_ac)
+  !$xmp bcast(file_DoS)
+  !$xmp bcast(file_band)
+  !$xmp bcast(file_dns)
+  !$xmp bcast(file_ovlp)
+  !$xmp bcast(file_nex)
+  
+  !$xmp bcast(aL)
+  !$xmp bcast(ax)
+  !$xmp bcast(ay)
+  !$xmp bcast(az)
+  
+  !$xmp bcast(Sym)
+  !$xmp bcast(crystal_structure)
+  !$xmp bcast(Nd)
+  !$xmp bcast(NLx)
+  !$xmp bcast(NLy)
+  !$xmp bcast(NLz)
+  !$xmp bcast(NKx)
+  !$xmp bcast(NKy)
+  !$xmp bcast(NKz)
+  !$xmp bcast(NEwald)
+  !$xmp bcast(aEwald)
+  !$xmp bcast(KbTev)
+#else
   call MPI_BCAST(SYSname,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(directory,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 !yabana
@@ -618,10 +717,12 @@ Subroutine Read_data
   call MPI_BCAST(file_dns,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(file_ovlp,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(file_nex,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+  
   call MPI_BCAST(aL,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(ax,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(ay,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(az,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+  
   call MPI_BCAST(Sym,1,MPI_Integer,0,MPI_COMM_WORLD,ierr) !sym
   call MPI_BCAST(crystal_structure,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Nd,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
@@ -634,7 +735,7 @@ Subroutine Read_data
   call MPI_BCAST(NEwald,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(aEwald,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(KbTev,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr) ! sato
-
+#endif
 
 !sym ---
   select case(crystal_structure)
@@ -668,9 +769,11 @@ Subroutine Read_data
 
   if(mod(NKx,2)+mod(NKy,2)+mod(NKz,2) /= 0) call err_finalize('NKx,NKy,NKz /= even')
   if(mod(NLx,2)+mod(NLy,2)+mod(NLz,2) /= 0) call err_finalize('NLx,NLy,NLz /= even')
-  
+#ifdef _XCALABLEMP
+  !$xmp barrier
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-
+#endif
   aLx=ax*aL;    aLy=ay*aL;    aLz=az*aL
   aLxyz=aLx*aLy*aLz
   bLx=2*Pi/aLx; bLy=2*Pi/aLy; bLz=2*Pi/aLz
@@ -700,9 +803,14 @@ Subroutine Read_data
       read(410, *) NK, NKxyz
       close(410)
       write(*,*) "NK=", NK, "NKxyz=", NKxyz      
-    endif
+   endif
+#ifdef _XCALABLEMP
+   !$xmp bcast(NK)
+   !$xmp bcast(NKxyz)
+#else
     call MPI_BCAST(NK,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
     call MPI_BCAST(NKxyz,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+#endif
   endif
 
   NK_ave=NK/Nprocs; NK_remainder=NK-NK_ave*Nprocs
@@ -784,11 +892,17 @@ Subroutine Read_data
     NBoccmax=NB
   end if
 
-
+#ifdef _XCALABLEMP
+  !$xmp bcast(Nelec)
+  !$xmp bcast(NB)
+  !$xmp bcast(NBoccmax)
+  !$xmp barrier
+#else
   call MPI_BCAST(Nelec,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr) ! sato
   call MPI_BCAST(NB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(NBoccmax,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
   NKB=(NK_e-NK_s+1)*NBoccmax ! sato
 
   allocate(occ(NB,NK),wk(NK),esp(NB,NK))
@@ -823,13 +937,33 @@ Subroutine Read_data
     write(*,*) 'MD_option =', MD_option
     write(*,*) 'AD_RHO =', AD_RHO
     write(*,*) 'Nt,dt=',Nt,dt
-  endif
+ endif
+#ifdef _XCALABLEMP
+ !$xmp bcast(FSset_option)
+ !$xmp bcast(Ncg)
+ !$xmp bcast(Nmemory_MB)
+ !$xmp bcast(alpha_MB)
+ !$xmp bcast(NFSset_start)
+ !$xmp bcast(NFSset_every)
+ 
+ !$xmp bcast(Nscf)
+ !$xmp bcast(ext_field)
+ !$xmp bcast(Longi_Trans)
+ !$xmp bcast(MD_option)
+ !$xmp bcast(AD_RHO)
+ !$xmp bcast(Nt)
+ !$xmp bcast(dt)
+ !$xmp bcast(entrance_option)
+ !$xmp bcast(entrance_iter)
+ !$xmp barrier
+#else
   call MPI_BCAST(FSset_option,1,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Ncg,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Nmemory_MB,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(alpha_MB,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(NFSset_start,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(NFSset_every,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+  
   call MPI_BCAST(Nscf,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(ext_field,2,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Longi_Trans,2,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
@@ -841,11 +975,16 @@ Subroutine Read_data
 !  call MPI_BCAST(Time_shutdown,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(entrance_iter,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
   if(ext_field /= 'LF' .and. ext_field /= 'LR' ) call err_finalize('incorrect option for ext_field')
   if(Longi_Trans /= 'Lo' .and. Longi_Trans /= 'Tr' ) call err_finalize('incorrect option for Longi_Trans')
   if(AD_RHO /= 'TD' .and. AD_RHO /= 'GS' .and. AD_RHO /= 'No' ) call err_finalize('incorrect option for Longi_Trans')
 
+#ifdef _XCALABLEMP
+  !$xmp barrier
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
 
   allocate(javt(0:Nt,3))
   allocate(Ac_ext(-1:Nt+1,3),Ac_ind(-1:Nt+1,3),Ac_tot(-1:Nt+1,3))
@@ -873,7 +1012,28 @@ Subroutine Read_data
     write(*,*) ''
     write(*,*) '===========ion configuration================'
     write(*,*) 'NI,NE=',NI,NE
-  endif
+ endif
+#ifdef _XCALABLEMP
+ !$xmp bcast(dAc)
+ !$xmp bcast(Nomega)
+ !$xmp bcast(domega)
+ !$xmp bcast(AE_shape)
+ !$xmp bcast(IWcm2_1)
+ !$xmp bcast(tpulsefs_1)
+ !$xmp bcast(omegaev_1)
+ !$xmp bcast(phi_CEP_1)
+ !$xmp bcast(Epdir_1)
+ 
+ !$xmp bcast(IWcm2_2)
+ !$xmp bcast(tpulsefs_2)
+ !$xmp bcast(omegaev_2)
+ !$xmp bcast(phi_CEP_2)
+ !$xmp bcast(Epdir_2)
+ !$xmp bcast(T1_T2fs)
+ !$xmp bcast(NI)
+ !$xmp bcast(NE)
+ !$xmp barrier
+#else
   call MPI_BCAST(dAc,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Nomega,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(domega,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
@@ -883,6 +1043,7 @@ Subroutine Read_data
   call MPI_BCAST(omegaev_1,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(phi_CEP_1,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Epdir_1,3,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+  
   call MPI_BCAST(IWcm2_2,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(tpulsefs_2,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(omegaev_2,1,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
@@ -892,10 +1053,11 @@ Subroutine Read_data
   call MPI_BCAST(NI,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(NE,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+#endif
+
   if(AE_shape /= 'Asin2cos' .and. AE_shape /= 'Esin2sin' &
     &.and. AE_shape /= 'input' .and. AE_shape /= 'Asin2_cw' ) call err_finalize('incorrect option for AE_shape')
-
-
+  
   allocate(Zatom(NE),Kion(NI),Rps(NE),NRps(NE))
   allocate(Rion(3,NI),Rion_eq(3,NI),dRion(3,NI,-1:Nt+1))
   allocate(Zps(NE),NRloc(NE),Rloc(NE),Mass(NE),force(3,NI))
@@ -921,14 +1083,21 @@ Subroutine Read_data
       write(*,*) ia,Kion(ia)
       write(*,'(3f12.8)') (Rion(j,ia),j=1,3)
     end do
-  endif
+ endif
 
+#ifdef _XCALABLEMP
+  !$xmp bcast(Zatom)
+  !$xmp bcast(Kion)
+  !$xmp bcast(Lref)
+  !$xmp bcast(Rion)
+  !$xmp barrier
+#else
   call MPI_BCAST(Zatom,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Kion,NI,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Lref,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
   call MPI_BCAST(Rion,3*NI,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
-
+#endif
   Rion(1,:)=Rion(1,:)*aLx
   Rion(2,:)=Rion(2,:)*aLy
   Rion(3,:)=Rion(3,:)*aLz
@@ -943,13 +1112,22 @@ subroutine prep_Reentrance_Read
   implicit none
   real(8) :: time_in,time_out
 
+#ifdef _XCALABLEMP
+  !$xmp barrier
+  time_in=xmp_wtime()
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
   time_in=MPI_WTIME()
+#endif
 
   if(Myrank == 0) then
     read(*,*) directory
-  end if
-  call MPI_BCAST(directory,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+ end if
+#ifdef _XCALABLEMP
+ !$xmp bcast(directory)
+#else
+ call MPI_BCAST(directory,50,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+#endif
 
   write(cMyrank,'(I5.5)')Myrank
   file_reentrance=trim(directory)//'tmp_re.'//trim(cMyrank)
@@ -1209,8 +1387,13 @@ subroutine prep_Reentrance_Read
 
   close(500)
 
+#ifdef _XCALABLEMP
+  !$xmp barrier
+  time_out=xmp_wtime()
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
   time_out=MPI_WTIME()
+#endif
 
   if(myrank == 0)write(*,*)'Reentrance time read =',time_out-time_in,' sec'
 
@@ -1223,9 +1406,14 @@ subroutine prep_Reentrance_write
   implicit none
   real(8) :: time_in,time_out
 
+#ifdef _XCALABLEMP
+  !$xmp barrier
+  time_in=xmp_wtime()
+#else  
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
   time_in=MPI_WTIME()
-
+#endif
+  
   if (Myrank == 0) then
     open(501,file=trim(directory)//trim(SYSname)//'_re.dat')
     write(501,*) "'reentrance'"! entrance_option
@@ -1234,14 +1422,12 @@ subroutine prep_Reentrance_write
     close(501)
   end if
 
-
   write(cMyrank,'(I5.5)')Myrank
 
   file_reentrance=trim(directory)//'tmp_re.'//trim(cMyrank)
   open(500,file=file_reentrance,form='unformatted')
 
   write(500) iter_now,iter_now !iter_now=entrance_iter
-
   
 !======== write section ===========================
 !== write data ===!  
@@ -1410,9 +1596,14 @@ subroutine prep_Reentrance_write
 !== write data ===!  
 
   close(500)
+#ifdef _XCALABLEMP
+  !$xmp barrier
+  time_out=xmp_wtime()
+#else
   call MPI_BARRIER(MPI_COMM_WORLD,ierr)
   time_out=MPI_WTIME()
-
+#endif
+  
   if(myrank == 0)write(*,*)'Reentrance time write =',time_out-time_in,' sec'
 
   return
@@ -1425,8 +1616,10 @@ Subroutine err_finalize(err_message)
   character(*),intent(in) :: err_message
   if (Myrank == 0) then
     write(*,*) err_message
-  endif
+ endif
+ 
+#ifndef _XCALABLEMP
   call MPI_FINALIZE(ierr)
-
+#endif
   stop
 End Subroutine Err_finalize

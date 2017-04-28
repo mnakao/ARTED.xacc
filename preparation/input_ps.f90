@@ -19,7 +19,7 @@ Subroutine input_pseudopotential_YS
        &,Nrmax,Lmax,Mlps,Lref,Zps,NRloc,NRps,inorm&
        &,rad,Rps,vloctbl,udVtbl,radnl,Rloc,anorm,dvloctbl,dudVtbl
   implicit none
-  include 'mpif.h'
+!  include 'mpif.h'
   integer,parameter :: Lmax0=4,Nrmax0=50000
   real(8),parameter :: Eps0=1d-10
   integer :: ik,Mr,l,i
@@ -210,21 +210,41 @@ Subroutine input_pseudopotential_YS
     enddo
   endif
 
-  CALL MPI_BCAST(Zps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(Mlps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(Rps,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(NRps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(NRloc,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(Rloc,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(anorm,(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(inorm,(Lmax+1)*NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(rad,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(radnl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(vloctbl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(dvloctbl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(udVtbl,Nrmax*(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(dudVtbl,Nrmax*(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  CALL MPI_BCAST(Mass,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(Zps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(Mlps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(Rps,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(NRps,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(NRloc,NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(Rloc,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+  
+!  CALL MPI_BCAST(anorm,(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(inorm,(Lmax+1)*NE,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(rad,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(radnl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+  
+!  CALL MPI_BCAST(vloctbl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(dvloctbl,Nrmax*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(udVtbl,Nrmax*(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(dudVtbl,Nrmax*(Lmax+1)*NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  CALL MPI_BCAST(Mass,NE,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+
+  !$xmp bcast(Zps)
+  !$xmp bcast(Mlps)
+  !$xmp bcast(Rps)
+  !$xmp bcast(NRps)
+  !$xmp bcast(NRloc)
+  !$xmp bcast(Rloc)
+  
+  !$xmp bcast(anorm)
+  !$xmp bcast(inorm)
+  !$xmp bcast(rad)
+  !$xmp bcast(radnl)
+  
+  !$xmp bcast(vloctbl)
+  !$xmp bcast(dvloctbl)
+  !$xmp bcast(udVtbl)
+  !$xmp bcast(dudVtbl)
+  !$xmp bcast(Mass)
 
   return
   contains

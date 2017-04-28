@@ -317,12 +317,16 @@ subroutine init_non_uniform_k_grid()
     enddo
     close(410)
   endif
-  call MPI_BCAST(kAc,3*NK,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
-  call MPI_BCAST(wk,NK,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  call MPI_BCAST(kAc,3*NK,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+!  call MPI_BCAST(wk,NK,MPI_REAL8,0,MPI_COMM_WORLD,ierr)
+  !$xmp bcast(kAc)
+  !$xmp bcast(wk)
+
   if (abs(sum(wk) - NKxyz) > NKxyz*0.01) then
     call err_finalize('NKxyz must be an integer which equals to the summention of WK')
   endif
-  call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+  !  call MPI_BARRIER(MPI_COMM_WORLD,ierr)
+  !$xmp barrier
   kAc0=kAc  ! Store initial k-point coordinates
 end subroutine
 

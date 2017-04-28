@@ -79,7 +79,9 @@ subroutine psi_rho_impl(zutmp,zu_NB)
   end select
 
   call timelog_begin(LOG_ALLREDUCE)
-  call MPI_ALLREDUCE(rho_l,rho,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(rho_l,rho,NL,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:rho_l)
+  rho(:) = rho_l(:)
   call timelog_end(LOG_ALLREDUCE)
 
   call timelog_end(LOG_PSI_RHO)

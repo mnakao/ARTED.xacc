@@ -112,7 +112,9 @@ Subroutine CG_omp(iter_cg_max)
 !$omp end parallel
 
   call timelog_begin(LOG_ALLREDUCE)
-  call MPI_ALLREDUCE(esp_var_l,esp_var,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(esp_var_l,esp_var,NB*NK,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:esp_var_l)
+esp_var(:,:) = esp_var_l(:,:)
   call timelog_end(LOG_ALLREDUCE)
 
   call timelog_end(LOG_CG)

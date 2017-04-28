@@ -14,10 +14,12 @@ do
 done
 
 # OK
-for i in init_Ac.f90 hpsi_RT.f90 dt_evolve.f90 Fourier_tr.f90 k_shift_wf.f90 dt_evolve_hpsi.f90
+for i in init_Ac.f90 dt_evolve.f90 Fourier_tr.f90 k_shift_wf.f90 dt_evolve_hpsi.f90
 do
     cat ./RT/$i >> xacc.f90
 done
+# ACC dake
+cat ./RT/hpsi_RT.f90 >> xacc-noomp.f90
 
 # OK
 cat ./common/preprocessor.f90 >> xacc.f90
@@ -27,6 +29,7 @@ for i in hpsi_stencil.f90 hpsi.f90 psi_rho.f90 Ylm_dYlm.f90 Hartree.f90
 do
     cat ./common/$i >> xacc.f90
 done
+
 
 # OK
 for i in init_wf.f90 input_ps.f90 fd_coef.f90 prep_ps.f90 init.f90
@@ -58,9 +61,18 @@ xmpcc -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZE
 xmpcc -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -c modules/papi_wrap.c
 
 xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -c xacc.f90
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -c xacc-noomp.f90
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
 #mpif90 -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -mp -acc -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -module /home/mnakao/work/xmp-trunk/include/ -c mpi.f90
 
 xmpf90 -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -omp -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee xacc.o xacc-noomp.o env_variables_internal.o papi_wrap.o -llapack -lblas ./main/sc.f90
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 

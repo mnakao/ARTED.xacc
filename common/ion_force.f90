@@ -65,8 +65,10 @@ Subroutine Ion_Force(Rion_update,GS_RT)
            &+conjg(rhoe_G(n))*dVloc_G(n,ik)*zI*Gvec(:)*exp(-zI*Gd)
     enddo
   enddo
-  call MPI_ALLREDUCE(ftmp_l,Floc,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-
+!  call MPI_ALLREDUCE(ftmp_l,Floc,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:ftmp_l)
+  Floc(:,:) = ftmp_l(:,:)
+  
 !nonlocal
   ftmp_l=0.d0
   do ik=NK_s,NK_e
@@ -97,7 +99,9 @@ Subroutine Ion_Force(Rion_update,GS_RT)
       enddo
     enddo
   enddo
-  call MPI_ALLREDUCE(ftmp_l,fnl,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(ftmp_l,fnl,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:ftmp_l)
+  fnl(:,:) = ftmp_l(:,:)
 
   force=Floc+Fnl+Fion
 
@@ -224,7 +228,9 @@ contains
     end do
 
     call timelog_begin(LOG_ALLREDUCE)
-    call MPI_ALLREDUCE(ftmp_l,fnl,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !    call MPI_ALLREDUCE(ftmp_l,fnl,3*NI,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+    !$xmp reduction(+:ftmp_l)
+    fnl(:,:) = ftmp_l(:,:)
     call timelog_end(LOG_ALLREDUCE)
 
     force=Floc+Fnl+Fion
