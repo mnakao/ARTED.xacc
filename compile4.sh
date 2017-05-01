@@ -30,7 +30,6 @@ do
     cat ./common/$i >> xacc.f90
 done
 
-
 # OK
 for i in init_wf.f90 input_ps.f90 fd_coef.f90 prep_ps.f90 init.f90
 do

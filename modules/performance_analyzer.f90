@@ -47,22 +47,23 @@ contains
     use global_variables
     use timelog
     implicit none
-    real(8) :: lgflops(4), tgflops(4)
+    real(8) :: lgflops(4), tgflops(4), lgflops2(4)
 #ifdef ARTED_MS
     real(8) :: sgflops(4)
 #endif
 
-    call summation_threads(lgflops)
-
+    call summation_threads(lgflops2)
+    lgflops(:) = lgflops2(:)
+    
 #ifdef ARTED_MS
     !    call MPI_ALLREDUCE(lgflops,sgflops,4,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
-    !$xmp reduction(+:lgflops)
-    sgflops(:) = lgflops(:)
+    !$xmp reduction(+:lgflops2)
+    sgflops(:) = lgflops2(:)
 #endif
     !    call MPI_ALLREDUCE(lgflops,tgflops,4,MPI_REAL8,MPI_SUM,MPI_COMM_WORLD,ierr)
-    !$xmp reduction(+:lgflops)
-    tgflops(:) = lgflops(:)
-
+    !$xmp reduction(+:lgflops2)
+    tgflops(:) = lgflops2(:)
+    
     if(Myrank == 0) then
       print *, '###'
       print *, 'Performance [GFLOPS]'
