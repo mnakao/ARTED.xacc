@@ -224,7 +224,8 @@ subroutine Total_Energy(Rion_update,GS_RT)
   Eloc_tmp1 = Eloc_l1
   Eloc_tmp2 = Eloc_l2
   Eloc=Eloc_tmp1+Eloc_tmp2
-!  call MPI_ALLREDUCE(Enl_l,Enl,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !  call MPI_ALLREDUCE(Enl_l,Enl,1,MPI_REAL8,MPI_SUM,NEW_COMM_WORLD,ierr)
+  !$xmp reduction(+:Enl_l)
   Enl = Enl_l
   
 !Exchange correlation
