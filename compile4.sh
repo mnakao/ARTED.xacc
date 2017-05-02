@@ -63,7 +63,7 @@ xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMI
 if [ $? -ne 0 ]; then
     exit 1
 fi
-xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -c xacc-noomp.f90
+XMP_ONLYCAF=1 xmpf90  -DARTED_CURRENT_OPTIMIZED -DARTED_LBLK -DARTED_SC -DARTED_STENCIL_OPTIMIZED -DARTED_STENCIL_PADDING -cpp -Minfo=acc -xacc --Wn-acc --Wl-acc -I/opt/pgi/linux86-64/2016/mpi/mpich/include -D_OPENMP -ta=tesla,cc35,ptxinfo,maxregcount:128 -Mpreprocess -Kieee -c xacc-noomp.f90 -omp
 if [ $? -ne 0 ]; then
     exit 1
 fi
