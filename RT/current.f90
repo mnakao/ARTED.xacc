@@ -548,7 +548,7 @@ Subroutine current_GS_omp_KB_impl(zutmp,jxs,jys,jzs)
 !$omp parallel reduction(+:jxs,jys,jzs)
 
 !Constructing nonlocal part
-!$omp do private(ik,ia,j,i,ix,iy,iz,kr) 
+!$omp do private(ik,ia,j,i,ix,iy,iz,kr) collapse(2)
   do ik=NK_s,NK_e
   do ia=1,NI
   do j=1,Mps(ia)
@@ -598,7 +598,7 @@ Subroutine current_omp_KB_impl(zutmp,jxs,jys,jzs)
 !$omp parallel reduction(+:jxs,jys,jzs)
 
 !Constructing nonlocal part
-!$omp do private(ik,ia,j,i,ix,iy,iz,kr) 
+!$omp do private(ik,ia,j,i,ix,iy,iz,kr) collapse(2)
   do ik=NK_s,NK_e
   do ia=1,NI
   do j=1,Mps(ia)

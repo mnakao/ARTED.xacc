@@ -285,7 +285,7 @@ contains
 !$omp parallel private(ia,ix,iy,iz,ib,rab,rab2,n,G2,thr_id)
 !$    thr_id=omp_get_thread_num()
 
-!$omp do reduction(+:Eion_tmp1) 
+!$omp do reduction(+:Eion_tmp1) collapse(5)
       do ia=1,NI
       do ix=-NEwald,NEwald
       do iy=-NEwald,NEwald
@@ -330,7 +330,7 @@ contains
 !$omp parallel private(thr_id)
 !$  thr_id=omp_get_thread_num()
 
-!$omp do private(ia,n,Gd) reduction(+:Eloc_l2)
+!$omp do collapse(2) private(ia,n,Gd) reduction(+:Eloc_l2)
     do ia=1,NI
     do n=NG_s,NG_e
       Gd=Gx(n)*Rion(1,ia)+Gy(n)*Rion(2,ia)+Gz(n)*Rion(3,ia)
@@ -348,7 +348,7 @@ contains
     end do
 !$omp end do
 
-!$omp do private(ia,j,i,ix,iy,iz,kr)
+!$omp do private(ia,j,i,ix,iy,iz,kr) collapse(2)
     do ik=NK_s,NK_e
     do ia=1,NI
     do j=1,Mps(ia)
@@ -361,7 +361,8 @@ contains
 !$omp end do
 
 !$omp do private(ik,ib,nabt,tpsum,i,j,ilma,uVpsi,ia) &
-!$omp   &reduction(+:Ekin_l,Enl_l) 
+!$omp   &reduction(+:Ekin_l,Enl_l) &
+!$omp   &collapse(2)
     do ik=NK_s,NK_e
     do ib=1,NBoccmax
 

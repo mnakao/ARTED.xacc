@@ -142,7 +142,7 @@ contains
       ftmp_l=0.d0
 !$omp parallel
       do ia=1,NI
-!$omp do private(ik,ix,iy,iz,ib,rab,rab2) 
+!$omp do private(ik,ix,iy,iz,ib,rab,rab2) collapse(4)
       do ix=-NEwald,NEwald
       do iy=-NEwald,NEwald
       do iz=-NEwald,NEwald
@@ -189,7 +189,7 @@ contains
     end do
 
     !nonlocal
-!$omp do private(ik,j,i,ix,iy,iz,kr) 
+!$omp do private(ik,j,i,ix,iy,iz,kr) collapse(2)
     do ik=NK_s,NK_e
     do ia=1,NI
     do j=1,Mps(ia)
@@ -201,7 +201,7 @@ contains
     end do
 !$omp end do
 
-!$omp do private(ik,j,i,ib,ilma,uVpsi,duVpsi) 
+!$omp do private(ik,j,i,ib,ilma,uVpsi,duVpsi) collapse(2)
     do ik=NK_s,NK_e
     do ib=1,NBoccmax
       do ilma=1,Nlma
